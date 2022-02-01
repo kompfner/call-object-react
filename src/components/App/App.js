@@ -16,6 +16,23 @@ const STATE_JOINED = 'STATE_JOINED';
 const STATE_LEAVING = 'STATE_LEAVING';
 const STATE_ERROR = 'STATE_ERROR';
 
+console.log(
+  `[pk] track state debugging globals
+
+  localStorage flags:
+  - joinInputs ('custom'|'false', or remove)
+  - joinSFU ('true' or remove)
+  - logTracks ('remote'|'local', or remove)
+
+  functions:
+  - setInputAudio('custom'|false|'default')
+  - setInputVideo('custom'|false|'default')
+  - muteAudio()
+  - unmuteAudio()
+  - muteVideo()
+  - unmuteVideo()`
+);
+
 export default function App() {
   const [appState, setAppState] = useState(STATE_IDLE);
   const [roomUrl, setRoomUrl] = useState(null);
@@ -45,11 +62,53 @@ export default function App() {
    * be done with the call object for a while and you're no longer listening to its
    * events.
    */
-  const startJoiningCall = useCallback((url) => {
+  const startJoiningCall = useCallback(async (url) => {
     const newCallObject = DailyIframe.createCallObject();
     setRoomUrl(url);
     setCallObject(newCallObject);
     setAppState(STATE_JOINING);
+
+    // Join
+    switch (localStorage.getItem('joinInputs')) {
+      case 'custom':
+        console.log('[pk] joining with custom inputs');
+        const stream = await navigator.mediaDevices.getUserMedia({
+          video: true,
+          audio: true,
+        });
+        const videoTrack = stream.getVideoTracks()[0];
+        const audioTrack = stream.getAudioTracks()[0];
+        await newCallObject.join({
+          url,
+          videoSource: videoTrack,
+          audioSource: audioTrack,
+        });
+        break;
+      case 'false':
+        console.log('[pk] joining with false inputs');
+        await newCallObject.join({
+          url,
+          videoSource: false,
+          audioSource: false,
+        });
+        break;
+      default:
+        console.log('[pk] joining with default inputs');
+        await newCallObject.join({ url });
+        break;
+    }
+
+    // Switch to SFU right away
+    switch (localStorage.getItem('joinSFU')) {
+      case 'true':
+        console.log('[pk] switching to SFU post-join...');
+        await newCallObject.setNetworkTopology({ topology: 'sfu' });
+        break;
+      default:
+        console.log('[pk] not switching to SFU post-join...');
+        break;
+    }
+
     newCallObject.join({ url });
   }, []);
 
@@ -96,9 +155,108 @@ export default function App() {
   /**
    * Uncomment to attach call object to window for debugging purposes.
    */
-  // useEffect(() => {
-  //   window.callObject = callObject;
-  // }, [callObject]);
+  useEffect(() => {
+    window.callObject = callObject;
+
+    window.logRemoteTracks = () => {
+      for (const [id, participant] of Object.entries(
+        callObject.participants()
+      )) {
+        if (id !== 'local') {
+          const trackStates = participant.tracks;
+          console.log('[pk] remote tracks: ', {
+            audioSummary: trackStates.audio.state,
+            audio: trackStates.audio,
+            videoSummary: trackStates.video.state,
+            video: trackStates.video,
+          });
+        }
+      }
+    };
+
+    window.logLocalTracks = () => {
+      if (callObject.participants().local) {
+        const trackStates = callObject.participants().local.tracks;
+        console.log('[pk] local tracks: ', {
+          audioSummary: trackStates.audio.state,
+          audio: trackStates.audio,
+          videoSummary: trackStates.video.state,
+          video: trackStates.video,
+        });
+      }
+    };
+
+    window.setInputAudio = async (audio) => {
+      switch (audio) {
+        case 'custom':
+          console.log('[pk] setting custom input audio...');
+          const stream = await navigator.mediaDevices.getUserMedia({
+            video: false,
+            audio: true,
+          });
+          const audioTrack = stream.getAudioTracks()[0];
+          callObject.setInputDevicesAsync({ audioSource: audioTrack });
+          break;
+        case false:
+          console.log('[pk] setting false input audio...');
+          callObject.setInputDevicesAsync({ audioSource: false });
+          break;
+        case 'default':
+          console.log('[pk] setting default input audio...');
+          callObject.setInputDevicesAsync({ audioDeviceId: 'default' });
+          break;
+        default:
+          break;
+      }
+    };
+
+    window.setInputVideo = async (video) => {
+      switch (video) {
+        case 'custom':
+          console.log('[pk] setting custom input video...');
+          const stream = await navigator.mediaDevices.getUserMedia({
+            video: true,
+            audio: false,
+          });
+          const videoTrack = stream.getVideoTracks()[0];
+          callObject.setInputDevicesAsync({ videoSource: videoTrack });
+          break;
+        case false:
+          console.log('[pk] setting false input video...');
+          callObject.setInputDevicesAsync({ videoSource: false });
+          break;
+        case 'default':
+          console.log('[pk] setting default input video...');
+          const devices = (await callObject.enumerateDevices()).devices;
+          const defaultDevice = devices.find(
+            (deviceInfo) => deviceInfo.kind === 'videoinput'
+          );
+          console.log(`[pk] (video deviceId: ${defaultDevice.deviceId}`);
+          callObject.setInputDevicesAsync({
+            videoDeviceId: defaultDevice.deviceId,
+          });
+          break;
+        default:
+          break;
+      }
+    };
+
+    window.muteAudio = () => {
+      callObject.setLocalAudio(false);
+    };
+
+    window.unmuteAudio = () => {
+      callObject.setLocalAudio(true);
+    };
+
+    window.muteVideo = () => {
+      callObject.setLocalVideo(false);
+    };
+
+    window.unmuteVideo = () => {
+      callObject.setLocalVideo(true);
+    };
+  }, [callObject]);
 
   /**
    * Update app state based on reported meeting state changes.

@@ -35,6 +35,16 @@ export default function Call() {
 
     function handleNewParticipantsState(event) {
       event && logDailyEvent(event);
+
+      if (event && event.participant) {
+        const logTracks = localStorage.getItem('logTracks');
+        if (event.participant.local && logTracks === 'local') {
+          window.logLocalTracks();
+        } else if (!event.participant.local && logTracks === 'remote') {
+          window.logRemoteTracks();
+        }
+      }
+
       dispatch({
         type: PARTICIPANTS_CHANGE,
         participants: callObject.participants(),
