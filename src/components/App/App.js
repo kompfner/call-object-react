@@ -308,7 +308,7 @@ export default function App() {
           // video was denied permission; turn it off so we don't try to gUM it when turning on audio
           callObject.setLocalVideo(false);
           callObject.off('participant-updated', handleVideoEnableAttempt);
-          // re-enable local audio if needed (in case it was erroneously marked blocked along with video since it was a single gUM call)
+          // re-enable local audio if needed (in case it was erroneously marked blocked along with video)
           if (wantsAudioOn) {
             callObject.setLocalAudio(true);
           }
@@ -326,7 +326,7 @@ export default function App() {
           // audio was denied permission; turn it off so we don't try to gUM it when turning on audio
           callObject.setLocalAudio(false);
           callObject.off('participant-updated', handleAudioEnableAttempt);
-          // re-enable local video if needed (in case it was erroneously marked blocked along with audio since it was a single gUM call)
+          // re-enable local video if needed (in case it was erroneously marked blocked along with audio)
           if (wantsVideoOn) {
             callObject.setLocalVideo(true);
           }
@@ -336,29 +336,29 @@ export default function App() {
         }
       };
 
-      // start with video
-      wantsVideoOn = true;
-      callObject.on('participant-updated', handleVideoEnableAttempt);
-      callObject.setLocalVideo(true);
+      // // start with video
+      // wantsVideoOn = true;
+      // callObject.on('participant-updated', handleVideoEnableAttempt);
+      // callObject.setLocalVideo(true);
 
-      // then do audio
-      setTimeout(() => {
-        wantsAudioOn = true;
-        callObject.on('participant-updated', handleAudioEnableAttempt);
-        callObject.setLocalAudio(true);
-      }, 5000);
-
-      // // start with audio
-      // wantsAudioOn = true;
-      // callObject.on('participant-updated', handleAudioEnableAttempt);
-      // callObject.setLocalAudio(true);
-
-      // // then do video
+      // // then do audio
       // setTimeout(() => {
-      //   wantsVideoOn = true;
-      //   callObject.on('participant-updated', handleVideoEnableAttempt);
-      //   callObject.setLocalVideo(true);
+      //   wantsAudioOn = true;
+      //   callObject.on('participant-updated', handleAudioEnableAttempt);
+      //   callObject.setLocalAudio(true);
       // }, 5000);
+
+      // start with audio
+      wantsAudioOn = true;
+      callObject.on('participant-updated', handleAudioEnableAttempt);
+      callObject.setLocalAudio(true);
+
+      // then do video
+      setTimeout(() => {
+        wantsVideoOn = true;
+        callObject.on('participant-updated', handleVideoEnableAttempt);
+        callObject.setLocalVideo(true);
+      }, 5000);
     };
 
     /**
@@ -458,7 +458,88 @@ export default function App() {
     //   });
     // };
 
-    window.test = testUnmuteBlockedSecond_Audio;
+    window.test = testUnmuteBlockedSecond_Video;
+
+    // window.videoState = '';
+    // window.audioState = '';
+
+    // window.start = () => {
+    //   callObject.startCamera({
+    //     startAudioOff: true,
+    //     startVideoOff: true,
+    //     videoSource: false,
+    //     audioSource: false,
+    //   });
+    // };
+
+    // window.toggleVideo = async () => {
+    //   if (window.videoState === '') {
+    //     try {
+    //       const width = 1280;
+    //       const height = 720;
+    //       const stream = await window.navigator.mediaDevices.getUserMedia({
+    //         // TODO: flesh out Daily's default constraints here
+    //         video: {
+    //           aspectRatio: { min: 1.77 },
+    //           width: { ideal: width, max: width },
+    //           height: { ideal: height, max: height },
+    //           facingMode: { ideal: 'user' },
+    //         },
+    //       });
+    //       const track = stream.getVideoTracks()[0];
+    //       await callObject.setInputDevicesAsync({ videoSource: track });
+    //       window.videoState = 'available';
+    //     } catch (e) {
+    //       window.videoState = 'blocked';
+    //       console.error('something went wrong with starting video');
+    //     }
+    //   }
+
+    //   if (window.videoState === 'available') {
+    //     callObject.setLocalVideo(!callObject.localVideo());
+    //   }
+    // };
+
+    // window.toggleAudio = async () => {
+    //   if (window.audioState === '') {
+    //     try {
+    //       const stream = await window.navigator.mediaDevices.getUserMedia({
+    //         // TODO: flesh out Daily's default constraints here
+    //         audio: true,
+    //       });
+    //       const track = stream.getAudioTracks()[0];
+    //       await callObject.setInputDevicesAsync({ audioSource: track });
+    //       window.audioState = 'available';
+    //     } catch (e) {
+    //       window.audioState = 'blocked';
+    //       console.error('something went wrong with starting audio');
+    //     }
+    //   }
+
+    //   if (window.audioState === 'available') {
+    //     callObject.setLocalAudio(!callObject.localAudio());
+    //   }
+    // };
+
+    window.start = () => {
+      callObject.startCamera({ startVideoOff: true, startAudioOff: true });
+    };
+
+    window.camOn = () => {
+      callObject.setLocalVideo(true);
+    };
+
+    window.camOff = () => {
+      callObject.setLocalVideo(false);
+    };
+
+    window.micOn = () => {
+      callObject.setLocalAudio(true);
+    };
+
+    window.micOff = () => {
+      callObject.setLocalAudio(false);
+    };
   }, [callObject]);
 
   /**
