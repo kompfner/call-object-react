@@ -47,7 +47,11 @@ export default function App() {
    */
   const startJoiningCall = useCallback((url) => {
     const newCallObject = DailyIframe.createCallObject({
-      dailyConfig: { experimentalChromeVideoMuteLightOff: true },
+      url,
+      dailyConfig: {
+        experimentalChromeVideoMuteLightOff: true,
+        enableIndependentDevicePermissionPrompts: true,
+      },
     });
     setRoomUrl(url);
     setCallObject(newCallObject);
@@ -109,8 +113,6 @@ export default function App() {
       });
     };
 
-    // TODO: ensure that the below can work without waiting 5s in between
-
     /**
      * Prereqs:
      * - revoke browser cam permission
@@ -118,12 +120,11 @@ export default function App() {
      * Test:
      * - start with cam and mic off
      * - unmute video (should error and mark cam as blocked)
-     * - mute video (should prevent re-gUMming it in the future)
      * - unmute audio (should succeed)
      * - toggle audio off and on (should succeed)
      *
      */
-    const testUnmuteBlocked_Video = async () => {
+    window.test_camBlocked_unmuteCamFirst = async () => {
       console.log('[pk] start with cam and mic off');
       await callObject.startCamera({
         startVideoOff: true,
@@ -131,28 +132,57 @@ export default function App() {
       });
 
       await wait(5000);
+
       console.log('[pk] unmute video (should error and mark cam as blocked)');
       await callObject.setLocalVideo(true);
 
       await wait(5000);
-      console.log(
-        '[pk] mute video (should prevent re-gUMming it in the future)'
-      );
-      await callObject.setLocalVideo(false);
 
-      await wait(5000);
       console.log('[pk] unmute audio (should succeed)');
       await callObject.setLocalAudio(true);
 
       await wait(5000);
+
       console.log('[pk] toggle audio off and on (should succeed)');
       await callObject.setLocalAudio(false);
       await wait(5000);
       await callObject.setLocalAudio(true);
+    };
 
-      // TODO: if we now setLocalVideo(true), it will result in *both* cam and
-      // mic being marked as blocked. But we can still recover by doing a
-      // setLocalVideo(false) and re-toggling audio.
+    /**
+     * Prereqs:
+     * - revoke browser cam permission
+     *
+     * Test:
+     * - start with cam and mic off
+     * - unmute audio (should succeed)
+     * - unmute video (should error and mark cam as blocked)
+     * - toggle audio off and on (should succeed)
+     *
+     */
+    window.test_camBlocked_unmuteMicFirst = async () => {
+      console.log('[pk] start with cam and mic off');
+      await callObject.startCamera({
+        startVideoOff: true,
+        startAudioOff: true,
+      });
+
+      await wait(5000);
+
+      console.log('[pk] unmute audio (should succeed)');
+      await callObject.setLocalAudio(true);
+
+      await wait(5000);
+
+      console.log('[pk] unmute video (should error and mark cam as blocked)');
+      await callObject.setLocalVideo(true);
+
+      await wait(5000);
+
+      console.log('[pk] toggle audio off and on (should succeed)');
+      await callObject.setLocalAudio(false);
+      await wait(5000);
+      await callObject.setLocalAudio(true);
     };
 
     /**
@@ -161,13 +191,12 @@ export default function App() {
      *
      * Test:
      * - start with cam and mic off
-     * - unmute audio (should error and mark mic as blocked)
-     * - mute audio (should prevent re-gUMming it in the future)
      * - unmute video (should succeed)
+     * - unmute audio (should error and mark mic as blocked)
      * - toggle video off and on (should succeed)
      *
      */
-    const testUnmuteBlocked_Audio = async () => {
+    window.test_micBlocked_unmuteCamFirst = async () => {
       console.log('[pk] start with cam and mic off');
       await callObject.startCamera({
         startVideoOff: true,
@@ -175,28 +204,101 @@ export default function App() {
       });
 
       await wait(5000);
-      console.log('[pk] unmute audio (should error and mark mic as blocked)');
-      await callObject.setLocalAudio(true);
 
-      await wait(5000);
-      console.log(
-        '[pk] mute audio (should prevent re-gUMming it in the future)'
-      );
-      await callObject.setLocalAudio(false);
-
-      await wait(5000);
       console.log('[pk] unmute video (should succeed)');
       await callObject.setLocalVideo(true);
 
       await wait(5000);
+
+      console.log('[pk] unmute audio (should error and mark mic as blocked)');
+      await callObject.setLocalAudio(true);
+
+      await wait(5000);
+
+      console.log('[pk] toggle video off and on (should succeed)');
+      await callObject.setLocalVideo(false);
+      await wait(5000);
+      await callObject.setLocalVideo(true);
+    };
+
+    /**
+     * Prereqs:
+     * - revoke browser cam permission
+     *
+     * Test:
+     * - start with cam and mic off
+     * - unmute audio (should error and mark mic as blocked)
+     * - unmute video (should succeed)
+     * - toggle video off and on (should succeed)
+     *
+     */
+    window.test_micBlocked_unmuteMicFirst = async () => {
+      console.log('[pk] start with cam and mic off');
+      await callObject.startCamera({
+        startVideoOff: true,
+        startAudioOff: true,
+      });
+
+      await wait(5000);
+
+      console.log('[pk] unmute audio (should error and mark mic as blocked)');
+      await callObject.setLocalAudio(true);
+
+      await wait(5000);
+
+      console.log('[pk] unmute video (should succeed)');
+      await callObject.setLocalVideo(true);
+
+      await wait(5000);
+
+      console.log('[pk] toggle video off and on (should succeed)');
+      await callObject.setLocalVideo(false);
+      await wait(5000);
+      await callObject.setLocalVideo(true);
+    };
+
+    /**
+     * Prereqs:
+     * - grant both devices permission
+     *
+     * Test:
+     * - start with cam and mic off
+     * - unmute video (should succeed)
+     * - unmute audio (should succeed)
+     * - toggle video off and on (should succeed)
+     * - toggle audio off and on (should succeed)
+     *
+     */
+    window.test_noneBlocked_unmuteCamFirst = async () => {
+      console.log('[pk] start with cam and mic off');
+      await callObject.startCamera({
+        startVideoOff: true,
+        startAudioOff: true,
+      });
+
+      await wait(5000);
+
+      console.log('[pk] unmute video (should succeed)');
+      await callObject.setLocalVideo(true);
+
+      await wait(5000);
+
+      console.log('[pk] unmute audio (should succeed)');
+      await callObject.setLocalAudio(true);
+
+      await wait(5000);
+
       console.log('[pk] toggle video off and on (should succeed)');
       await callObject.setLocalVideo(false);
       await wait(5000);
       await callObject.setLocalVideo(true);
 
-      // TODO: if we now setLocalAudio(true), it will result in *both* cam and
-      // mic being marked as blocked. But we can still recover by doing a
-      // setLocalAudio(false) and re-toggling video.
+      await wait(5000);
+
+      console.log('[pk] toggle audio off and on (should succeed)');
+      await callObject.setLocalAudio(false);
+      await wait(5000);
+      await callObject.setLocalAudio(true);
     };
 
     /**
@@ -206,12 +308,12 @@ export default function App() {
      * Test:
      * - start with cam and mic off
      * - unmute audio (should succeed)
-     * - unmute video (should error and mark cam as blocked; will also mark mic as blocked)
-     * - mute video (should prevent re-gUMming it in the future)
-     * - unmute audio again (should succeed)
+     * - unmute video (should succeed)
+     * - toggle video off and on (should succeed)
+     * - toggle audio off and on (should succeed)
      *
      */
-    const testUnmuteBlockedSecond_Video = async () => {
+    window.test_noneBlocked_unmuteMicFirst = async () => {
       console.log('[pk] start with cam and mic off');
       await callObject.startCamera({
         startVideoOff: true,
@@ -219,307 +321,31 @@ export default function App() {
       });
 
       await wait(5000);
+
       console.log('[pk] unmute audio (should succeed)');
       await callObject.setLocalAudio(true);
 
       await wait(5000);
-      console.log(
-        '[pk] unmute video (should error and mark cam as blocked; will also mark mic as blocked)'
-      );
-      await callObject.setLocalVideo(true);
 
-      await 5000;
-      console.log(
-        '[pk] mute video (should prevent re-gUMming it in the future)'
-      );
-      await callObject.setLocalVideo(false);
-
-      await wait(5000);
-      console.log('[pk] unmute audio again (should succeed)');
-      await callObject.setLocalAudio(true);
-
-      // TODO: if we now setLocalVideo(true), it will result in *both* cam and
-      // mic being marked as blocked. But we can still recover by doing a
-      // setLocalVideo(false) and re-toggling audio.
-    };
-
-    /**
-     * Prereqs:
-     * - revoke browser mic permission
-     *
-     * Test:
-     * - start with cam and mic off
-     * - unmute video (should succeed)
-     * - unmute audio (should error and mark cam as blocked; will also mark mic as blocked)
-     * - mute audio (should prevent re-gUMming it in the future)
-     * - unmute video again (should succeed)
-     *
-     */
-    const testUnmuteBlockedSecond_Audio = async () => {
-      console.log('[pk] start with cam and mic off');
-      await callObject.startCamera({
-        startVideoOff: true,
-        startAudioOff: true,
-      });
-
-      await wait(5000);
       console.log('[pk] unmute video (should succeed)');
       await callObject.setLocalVideo(true);
 
       await wait(5000);
-      console.log(
-        '[pk] unmute audio (should error and mark cam as blocked; will also mark mic as blocked)'
-      );
-      await callObject.setLocalAudio(true);
 
-      await 5000;
-      console.log(
-        '[pk] mute audio (should prevent re-gUMming it in the future)'
-      );
-      await callObject.setLocalAudio(false);
-
+      console.log('[pk] toggle video off and on (should succeed)');
+      await callObject.setLocalVideo(false);
       await wait(5000);
-      console.log('[pk] unmute video again (should succeed)');
       await callObject.setLocalVideo(true);
 
-      // TODO: if we now setLocalVideo(true), it will result in *both* cam and
-      // mic being marked as blocked. But we can still recover by doing a
-      // setLocalVideo(false) and re-toggling audio.
+      await wait(5000);
+
+      console.log('[pk] toggle audio off and on (should succeed)');
+      await callObject.setLocalAudio(false);
+      await wait(5000);
+      await callObject.setLocalAudio(true);
     };
 
-    window.startPattern = async () => {
-      // const callObject = (callObject as import('@daily-co/daily-js').DailyCall);
-
-      await callObject.startCamera({
-        startVideoOff: true,
-        startAudioOff: true,
-      });
-
-      // try turning on devices one at a time...
-
-      let wantsVideoOn = false;
-      let wantsAudioOn = false;
-
-      const handleVideoEnableAttempt = (event) => {
-        if (!event.participant.local) {
-          return;
-        }
-        if (event.participant.tracks.video.state === 'blocked') {
-          // video was denied permission; turn it off so we don't try to gUM it when turning on audio
-          callObject.setLocalVideo(false);
-          callObject.off('participant-updated', handleVideoEnableAttempt);
-          // re-enable local audio if needed (in case it was erroneously marked blocked along with video)
-          if (wantsAudioOn) {
-            callObject.setLocalAudio(true);
-          }
-        } else if (event.participant.tracks.video.state === 'playable') {
-          // video worked!
-          callObject.off('participant-updated', handleVideoEnableAttempt);
-        }
-      };
-
-      const handleAudioEnableAttempt = (event) => {
-        if (!event.participant.local) {
-          return;
-        }
-        if (event.participant.tracks.audio.state === 'blocked') {
-          // audio was denied permission; turn it off so we don't try to gUM it when turning on audio
-          callObject.setLocalAudio(false);
-          callObject.off('participant-updated', handleAudioEnableAttempt);
-          // re-enable local video if needed (in case it was erroneously marked blocked along with audio)
-          if (wantsVideoOn) {
-            callObject.setLocalVideo(true);
-          }
-        } else if (event.participant.tracks.audio.state === 'playable') {
-          // audio worked!
-          callObject.off('participant-updated', handleAudioEnableAttempt);
-        }
-      };
-
-      // // start with video
-      // wantsVideoOn = true;
-      // callObject.on('participant-updated', handleVideoEnableAttempt);
-      // callObject.setLocalVideo(true);
-
-      // // then do audio
-      // setTimeout(() => {
-      //   wantsAudioOn = true;
-      //   callObject.on('participant-updated', handleAudioEnableAttempt);
-      //   callObject.setLocalAudio(true);
-      // }, 5000);
-
-      // start with audio
-      wantsAudioOn = true;
-      callObject.on('participant-updated', handleAudioEnableAttempt);
-      callObject.setLocalAudio(true);
-
-      // then do video
-      setTimeout(() => {
-        wantsVideoOn = true;
-        callObject.on('participant-updated', handleVideoEnableAttempt);
-        callObject.setLocalVideo(true);
-      }, 5000);
-    };
-
-    /**
-     * Prereqs:
-     * - ensure both devices have permission
-     *
-     * Test:
-     * - start with cam and mic off
-     * - unmute video
-     * - unmute audio
-     * - toggle video
-     * - toggle audio
-     *
-     */
-    const testNormal_StartingWithVideo = async () => {};
-
-    /**
-     * Prereqs:
-     * - ensure both devices have permission
-     *
-     * Test:
-     * - start with cam and mic off
-     * - unmute video
-     * - unmute audio
-     * - toggle video
-     * - toggle audio
-     *
-     */
-    const testNormal_StartingWithAudio = async () => {};
-
-    /**
-     * Prereqs:
-     * - revoke browser cam permission
-     *
-     * Test:
-     * - start with mic off (should error and mark cam as blocked)
-     * - mute video (should prevent re-gUMming it in the future)
-     * - unmute audio (should succeed)
-     * - toggle audio off and on (should succeed)
-     *
-     */
-    // const testStartBlocked_Video = async () => {
-    //   console.log(
-    //     '[pk] start with mic off (should error and mark cam as blocked)'
-    //   );
-    //   await callObject.startCamera({
-    //     startVideoOff: false,
-    //     startAudioOff: true,
-    //   });
-
-    //   await wait(5000);
-    //   console.log(
-    //     '[pk] mute video (should prevent re-gUMming it in the future)'
-    //   );
-    //   await callObject.setLocalVideo(false);
-
-    //   await wait(5000);
-    //   console.log('[pk] unmute audio (should succeed)');
-    //   await callObject.setLocalAudio(true);
-
-    //   await wait(5000);
-    //   console.log('[pk] toggle audio off and on (should succeed)');
-    //   await callObject.setLocalAudio(false);
-    //   await wait(5000);
-    //   await callObject.setLocalAudio(true);
-    // };
-
-    /**
-     * Prereqs:
-     * - revoke browser cam permission
-     * - apply commit in startcamera-with-devices-off-option-1
-     *
-     * - startCamera() with cam and mic sources disabled
-     * - wait
-     * - setLocalVideo(true) (error)
-     * - wait
-     * - setLocalAudio(true) (we *want* this to succeed)
-     *
-     */
-    // const test2 = async () => {
-    //   console.log('[pk] startCamera...');
-    //   await callObject.startCamera({
-    //     videoSource: false,
-    //     audioSource: false,
-    //   });
-    //   await wait(5000);
-    //   console.log('[pk] setInputDevicesAsync (enabling video)...');
-    //   await callObject.setInputDevicesAsync({
-    //     videoDeviceId: '',
-    //     audioDeviceId: false,
-    //   });
-    //   await wait(5000);
-    //   console.log('[pk] setInputDevicesAsync (enabling audio)...');
-    //   await callObject.setLocalAudio({
-    //     audioDeviceId: '',
-    //     videoDeviceId: false,
-    //   });
-    // };
-
-    window.test = testUnmuteBlockedSecond_Video;
-
-    // window.videoState = '';
-    // window.audioState = '';
-
-    // window.start = () => {
-    //   callObject.startCamera({
-    //     startAudioOff: true,
-    //     startVideoOff: true,
-    //     videoSource: false,
-    //     audioSource: false,
-    //   });
-    // };
-
-    // window.toggleVideo = async () => {
-    //   if (window.videoState === '') {
-    //     try {
-    //       const width = 1280;
-    //       const height = 720;
-    //       const stream = await window.navigator.mediaDevices.getUserMedia({
-    //         // TODO: flesh out Daily's default constraints here
-    //         video: {
-    //           aspectRatio: { min: 1.77 },
-    //           width: { ideal: width, max: width },
-    //           height: { ideal: height, max: height },
-    //           facingMode: { ideal: 'user' },
-    //         },
-    //       });
-    //       const track = stream.getVideoTracks()[0];
-    //       await callObject.setInputDevicesAsync({ videoSource: track });
-    //       window.videoState = 'available';
-    //     } catch (e) {
-    //       window.videoState = 'blocked';
-    //       console.error('something went wrong with starting video');
-    //     }
-    //   }
-
-    //   if (window.videoState === 'available') {
-    //     callObject.setLocalVideo(!callObject.localVideo());
-    //   }
-    // };
-
-    // window.toggleAudio = async () => {
-    //   if (window.audioState === '') {
-    //     try {
-    //       const stream = await window.navigator.mediaDevices.getUserMedia({
-    //         // TODO: flesh out Daily's default constraints here
-    //         audio: true,
-    //       });
-    //       const track = stream.getAudioTracks()[0];
-    //       await callObject.setInputDevicesAsync({ audioSource: track });
-    //       window.audioState = 'available';
-    //     } catch (e) {
-    //       window.audioState = 'blocked';
-    //       console.error('something went wrong with starting audio');
-    //     }
-    //   }
-
-    //   if (window.audioState === 'available') {
-    //     callObject.setLocalAudio(!callObject.localAudio());
-    //   }
-    // };
+    // Manual testing helpers
 
     window.start = () => {
       callObject.startCamera({ startVideoOff: true, startAudioOff: true });
