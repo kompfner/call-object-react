@@ -35,6 +35,15 @@ export default function Call() {
 
     function handleNewParticipantsState(event) {
       event && logDailyEvent(event);
+      if (event && event.participant) {
+        if (event && event.participant) {
+          if (event.participant.local) {
+            window.logLocalParticipantTrackState();
+          } else {
+            window.logRemoteParticipantTrackState();
+          }
+        }
+      }
       dispatch({
         type: PARTICIPANTS_CHANGE,
         participants: callObject.participants(),
