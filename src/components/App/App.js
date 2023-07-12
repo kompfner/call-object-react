@@ -57,6 +57,9 @@ export default function App() {
       // owner
       // 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJvIjp0cnVlLCJkIjoiNTQwMTM3OGUtMGI1Zi00N2VjLTg5NTMtMzAzNjMyODE3OTJkIiwiaWF0IjoxNjc2NTc3MTgyfQ.z76wOzLsOOainh88uVc0bpiItvHSQWG70IzThKOlU2A',
 
+      // owner token for paulk.ngrok.io
+      token:
+        'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJvIjp0cnVlLCJkIjoiNTQwMTM3OGUtMGI1Zi00N2VjLTg5NTMtMzAzNjMyODE3OTJkIiwiaWF0IjoxNjg5MTcxNjk0fQ.KGXZ0AfsglgnMacXbokGuaZpIHHpG81D44TNGe86vfg',
       // inputSettings:
       // valid
       // {
@@ -81,7 +84,7 @@ export default function App() {
         // -- v1 --
         // alwaysIncludeCamInPermissionPrompt: true, // default: false
         // alwaysIncludeMicInPermissionPrompt: false, // default: true
-        // useDevicePreferenceCookies: true, // default: false
+        useDevicePreferenceCookies: true, // default: false
       },
 
       // startAudioOff: true,
@@ -90,7 +93,9 @@ export default function App() {
     setRoomUrl(url);
     setCallObject(newCallObject);
     setAppState(STATE_JOINING);
-    newCallObject.join();
+    newCallObject.join().then(() => {
+      newCallObject.startTranscription();
+    });
   }, []);
 
   /**
@@ -479,17 +484,77 @@ export default function App() {
   }, [callObject]);
 
   /**
-   * Listen for app messages from other call participants.
+   * Listen for app messages from transcription.
    */
   useEffect(() => {
     if (!callObject) {
       return;
     }
 
-    function handleAppMessage(event) {
-      if (event) {
-        logDailyEvent(event);
-        console.log(`received app message from ${event.fromId}: `, event.data);
+    async function handleAppMessage(event) {
+      const data = event.data;
+      if (event?.fromId === 'transcription' && data?.is_final) {
+        // Print out transcription
+        const userName =
+          callObject.participants().local.session_id === data.session_id
+            ? 'You'
+            : callObject.participants()[data.session_id].user_name || 'Guest';
+        console.log(`${userName} (${data.timestamp}): ${data.text}`);
+      }
+    }
+
+    callObject.on('app-message', handleAppMessage);
+
+    return function cleanup() {
+      callObject.off('app-message', handleAppMessage);
+    };
+  }, [callObject]);
+
+  /**
+   * Listen for app messages from translation.
+   */
+  useEffect(() => {
+    if (!callObject) {
+      return;
+    }
+
+    async function handleAppMessage(event) {
+      const data = event.data;
+      if (event?.fromId === 'translation') {
+        // Ignore local translations
+        if (callObject.participants().local.session_id === data.session_id) {
+          return;
+        }
+
+        // Print out translation
+        const userName =
+          callObject.participants()[data.session_id].user_name || 'Guest';
+        console.log(`${userName} (${data.timestamp}): ${data.text}`);
+
+        // Text-to-speech
+        // voice id: 21m00Tcm4TlvDq8ikWAM (see https://api.elevenlabs.io/v1/voices for full list)
+        const response = await fetch(
+          'https://api.elevenlabs.io/v1/text-to-speech/21m00Tcm4TlvDq8ikWAM',
+          {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              Accept: 'audio/mpeg',
+              'xi-api-key': '106c1b95b4ce708587d5f059cae36777',
+            },
+            mode: 'cors',
+            body: JSON.stringify({
+              text: data.text,
+              model_id: 'eleven_multilingual_v1',
+            }),
+          }
+        );
+
+        console.log('[pk] got elevenlabs response', response);
+
+        const soundFileUrl = window.URL.createObjectURL(await response.blob());
+        const audioEl = new Audio(soundFileUrl);
+        audioEl.play();
       }
     }
 

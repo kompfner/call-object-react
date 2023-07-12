@@ -132,7 +132,7 @@ export default function Tray(props) {
         highlighted={highlightedChat}
         onClick={toggleChat}
       />
-      <Chat onClickDisplay={displayChat} notification={handleNewChat} />
+      {/* <Chat onClickDisplay={displayChat} notification={handleNewChat} /> */}
       <TrayButton
         type={TYPE_LEAVE}
         disabled={props.disabled}

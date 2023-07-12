@@ -24,13 +24,12 @@ async function createRoom() {
   // }),
   //   room = await response.json();
   // return room;
-
   // Comment out the above and uncomment the below, using your own URL
   // return { url: 'https://paulk.staging.daily.co/hello' };
-  return { url: 'https://paulk.daily.co/hello' };
-  // return {
-  //   url: 'https://paulk.ngrok.io/hello?bypassRegionDetection=true',
-  // };
+  // return { url: 'https://paulk.daily.co/hello' };
+  return {
+    url: 'https://paulk.ngrok.io/hello?bypassRegionDetection=true',
+  };
 }
 
 export default { createRoom };
