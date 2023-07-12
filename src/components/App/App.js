@@ -529,32 +529,9 @@ export default function App() {
         // Print out translation
         const userName =
           callObject.participants()[data.session_id].user_name || 'Guest';
-        console.log(`${userName} (${data.timestamp}): ${data.text}`);
-
-        // Text-to-speech
-        // voice id: 21m00Tcm4TlvDq8ikWAM (see https://api.elevenlabs.io/v1/voices for full list)
-        const response = await fetch(
-          'https://api.elevenlabs.io/v1/text-to-speech/21m00Tcm4TlvDq8ikWAM',
-          {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              Accept: 'audio/mpeg',
-              'xi-api-key': '106c1b95b4ce708587d5f059cae36777',
-            },
-            mode: 'cors',
-            body: JSON.stringify({
-              text: data.text,
-              model_id: 'eleven_multilingual_v1',
-            }),
-          }
+        console.log(
+          `[translated] ${userName} (${data.timestamp}): ${data.text}`
         );
-
-        console.log('[pk] got elevenlabs response', response);
-
-        const soundFileUrl = window.URL.createObjectURL(await response.blob());
-        const audioEl = new Audio(soundFileUrl);
-        audioEl.play();
       }
     }
 
