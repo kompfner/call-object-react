@@ -93,9 +93,7 @@ export default function App() {
     setRoomUrl(url);
     setCallObject(newCallObject);
     setAppState(STATE_JOINING);
-    newCallObject.join().then(() => {
-      newCallObject.startTranscription();
-    });
+    newCallObject.join();
   }, []);
 
   /**
@@ -137,6 +135,31 @@ export default function App() {
     if (pageUrl === window.location.href) return;
     window.history.replaceState(null, null, pageUrl);
   }, [roomUrl]);
+
+  /**
+   * Create translation debugging helpers.
+   */
+  useEffect(() => {
+    if (!callObject) {
+      return;
+    }
+
+    window.translateIntoSpanish = async () => {
+      await window.rtcpeers.forceSwitchToSoup();
+      callObject.updateTranslationSettings({
+        translateInboundAudioAs: ['text'],
+        language: 'es',
+      });
+    };
+
+    window.translateIntoEnglish = async () => {
+      await window.rtcpeers.forceSwitchToSoup();
+      callObject.updateTranslationSettings({
+        translateInboundAudioAs: ['text'],
+        language: 'en',
+      });
+    };
+  }, [callObject]);
 
   /**
    * Uncomment to attach call object to window for debugging purposes.
