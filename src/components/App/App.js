@@ -144,18 +144,18 @@ export default function App() {
       return;
     }
 
-    window.translateIntoSpanish = async () => {
+    window.translateIntoSpanish = async (into) => {
       await window.rtcpeers.forceSwitchToSoup();
       callObject.updateTranslationSettings({
-        translateInboundAudioAs: ['text'],
+        translateInboundAudioInto: into,
         language: 'es',
       });
     };
 
-    window.translateIntoEnglish = async () => {
+    window.translateIntoEnglish = async (into) => {
       await window.rtcpeers.forceSwitchToSoup();
       callObject.updateTranslationSettings({
-        translateInboundAudioAs: ['text'],
+        translateInboundAudioInto: into,
         language: 'en',
       });
     };
