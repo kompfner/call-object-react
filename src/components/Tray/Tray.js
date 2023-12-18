@@ -66,10 +66,8 @@ export default function Tray(props) {
   }
 
   function toggleChat() {
-    setChatDisplay(!displayChat);
-    if (highlightedChat) {
-      setChatHighlight(!highlightedChat);
-    }
+    // NOTE: must be in SFU mode for this to work
+    window.subscribeToStereoTrack();
   }
 
   function handleNewChat() {
@@ -85,9 +83,8 @@ export default function Tray(props) {
 
     function handleNewParticipantsState(event) {
       event && logDailyEvent(event);
-      const [isCameraMuted, isMicMuted, isSharingScreen] = getStreamStates(
-        callObject
-      );
+      const [isCameraMuted, isMicMuted, isSharingScreen] =
+        getStreamStates(callObject);
       setCameraMuted(isCameraMuted);
       setMicMuted(isMicMuted);
       setSharingScreen(isSharingScreen);

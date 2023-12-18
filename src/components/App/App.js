@@ -50,7 +50,7 @@ export default function App() {
     setRoomUrl(url);
     setCallObject(newCallObject);
     setAppState(STATE_JOINING);
-    newCallObject.join({ url });
+    newCallObject.join({ url, subscribeToTracksAutomatically: false });
   }, []);
 
   /**
@@ -96,9 +96,39 @@ export default function App() {
   /**
    * Uncomment to attach call object to window for debugging purposes.
    */
-  // useEffect(() => {
-  //   window.callObject = callObject;
-  // }, [callObject]);
+  useEffect(() => {
+    window.callObject = callObject;
+
+    window.startCustomStereoTrack = () => {
+      const audio = new Audio('./stereo-test.mp3');
+      audio.loop = true;
+      const stream = audio.captureStream();
+      audio.play();
+
+      setTimeout(() => {
+        callObject.startCustomTrack({
+          track: stream.getAudioTracks()[0],
+          trackName: 'stereo',
+          mode: 'music',
+        });
+      }, 5000);
+    };
+
+    window.subscribeToStereoTrack = () => {
+      const firstRemoteParticipantId = Object.keys(
+        callObject.participants()
+      ).find((id) => id !== 'local');
+      callObject.on('track-started', (e) => {
+        const track = e.track;
+        const audio = new Audio();
+        audio.srcObject = new MediaStream([track]);
+        audio.play();
+      });
+      callObject.updateParticipant(firstRemoteParticipantId, {
+        setSubscribedTracks: { custom: true },
+      });
+    };
+  }, [callObject]);
 
   /**
    * Update app state based on reported meeting state changes.
