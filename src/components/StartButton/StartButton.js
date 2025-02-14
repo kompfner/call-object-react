@@ -3,6 +3,7 @@ import './StartButton.css';
 
 /**
  * Props:
+ * - asOwner: boolean
  * - disabled: boolean
  * - onClick: () => ()
  */
@@ -13,7 +14,7 @@ export default function StartButton(props) {
       disabled={props.disabled}
       onClick={props.onClick}
     >
-      Click to start a call
+      {`Click to join as ${props.asOwner ? 'owner' : 'regular participant'}`}
     </button>
   );
 }

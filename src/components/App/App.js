@@ -47,15 +47,14 @@ export default function App() {
    * be done with the call object for a while and you're no longer listening to its
    * events.
    */
-  const startJoiningCall = useCallback((url) => {
+  const startJoiningCall = useCallback((url, asOwner) => {
     const newCallObject = DailyIframe.createCallObject({
       url,
 
-      // token:
-      // no perms
-      // 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJwIjp7ImNzIjpmYWxzZX0sImQiOiI1NDAxMzc4ZS0wYjVmLTQ3ZWMtODk1My0zMDM2MzI4MTc5MmQiLCJpYXQiOjE2NzY1NzYxMTV9.ibSMfOiEOCssgTkhhV2XLXhS-RI_9_1C0ou7QOk775U',
-      // owner
-      // 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJvIjp0cnVlLCJkIjoiNTQwMTM3OGUtMGI1Zi00N2VjLTg5NTMtMzAzNjMyODE3OTJkIiwiaWF0IjoxNjc2NTc3MTgyfQ.z76wOzLsOOainh88uVc0bpiItvHSQWG70IzThKOlU2A',
+      // NOTE: these need to be updated depending on which Daily environment (prod, staging, local) you're testing on
+      token: asOwner
+        ? 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJvIjp0cnVlLCJkIjoiNTQwMTM3OGUtMGI1Zi00N2VjLTg5NTMtMzAzNjMyODE3OTJkIiwiaWF0IjoxNzM5NTUzODU1fQ.0jqd5XRjJgYOcgOxOeiYuX5AONOMRGQYCFQ0sGPmkK8'
+        : 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJkIjoiNTQwMTM3OGUtMGI1Zi00N2VjLTg5NTMtMzAzNjMyODE3OTJkIiwiaWF0IjoxNzM5NTUzOTA0fQ.KvMip8acuOIdlnwv38MDlzYzBROsseE6JB4E2SU4-DU',
 
       // inputSettings:
       // valid
@@ -817,12 +816,22 @@ export default function App() {
           />
         </CallObjectContext.Provider>
       ) : (
-        <StartButton
-          disabled={!enableStartButton}
-          onClick={() => {
-            createCall().then((url) => startJoiningCall(url));
-          }}
-        />
+        <div className="start-button-container">
+          <StartButton
+            asOwner={true}
+            disabled={!enableStartButton}
+            onClick={() => {
+              createCall().then((url) => startJoiningCall(url, true));
+            }}
+          />
+          <StartButton
+            asOwner={false}
+            disabled={!enableStartButton}
+            onClick={() => {
+              createCall().then((url) => startJoiningCall(url, false));
+            }}
+          />
+        </div>
       )}
     </div>
   );
