@@ -274,7 +274,9 @@ export default function App() {
     window.switchCamToMac = async () => {
       const availableDevices = await callObject.enumerateDevices();
       const cam = availableDevices.devices.find(
-        (d) => d.kind === 'videoinput' && d.label.includes('FaceTime')
+        (d) =>
+          d.kind === 'videoinput' &&
+          (d.label.includes('FaceTime') || d.label.includes('MacBook'))
       );
       const newDevices = await callObject.setInputDevicesAsync({
         videoDeviceId: cam.deviceId,
