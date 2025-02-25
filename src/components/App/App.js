@@ -672,11 +672,19 @@ export default function App() {
     };
 
     window.revokeRemoteParticipantCanReceive = () => {
+      window.setRemoteParticipantCanReceiveToBool(false);
+    };
+
+    window.restoreRemoteParticipantCanReceive = () => {
+      window.setRemoteParticipantCanReceiveToBool(true);
+    };
+
+    window.setRemoteParticipantCanReceiveToBool = (bool) => {
       const firstRemoteParticipantId = Object.keys(
         callObject.participants()
       ).find((id) => id !== 'local');
       callObject.updateParticipant(firstRemoteParticipantId, {
-        updatePermissions: { canReceive: { base: false } },
+        updatePermissions: { canReceive: { base: bool } },
       });
     };
   }, [callObject]);
