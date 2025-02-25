@@ -670,6 +670,15 @@ export default function App() {
         setSubscribedTracks: { custom: true },
       });
     };
+
+    window.revokeRemoteParticipantCanReceive = () => {
+      const firstRemoteParticipantId = Object.keys(
+        callObject.participants()
+      ).find((id) => id !== 'local');
+      callObject.updateParticipant(firstRemoteParticipantId, {
+        updatePermissions: { canReceive: { base: false } },
+      });
+    };
   }, [callObject]);
 
   /**
